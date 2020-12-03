@@ -9,10 +9,9 @@ public class ZLabel : MonoBehaviour
     public string title;
     public bool global;
     private Text _label;
-    void Start()
+    void Awake()
     {
         _label = GetComponent<Text>();
-        
         if(global)
             NSTools.Model.BindGlobal(title, UpdateLabel);
         else

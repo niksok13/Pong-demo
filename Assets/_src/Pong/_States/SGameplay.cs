@@ -8,37 +8,59 @@ namespace States
     /// </summary>
     public class SReady:FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
-            Model.Set("gameplay_title","TOUCH TABLE TO START");
-            Model.Set("label_time",$"Best time: {PrefsManager.BestTime}");
+            Model.Set("gameplay_hint","TOUCH TABLE TO START");
+            var gamemode = Model.Get("enemy_mode", PlayerMode.Player);
+            switch (gamemode)
+            {
+                case PlayerMode.Ranked:
+                    Model.Set("gameplay_title", "SURVIVE FOR A WHILE\nJOIN TOP 100");
+                    break;
+    
+                case PlayerMode.Bot:
+                    Model.Set("gameplay_title", "SHARPEN YOUR SKILLS WITH BOT");
+                    break;
+
+                case PlayerMode.Mirror:
+                    Model.Set("gameplay_title", "CONTROL BOTH BARS\nWITH ONE THUMB");
+                    break;
+                
+                case PlayerMode.Player:
+                    Model.Set("gameplay_title", "PLAY WITH YOUR FRIEND\n(best on tablet)");
+                    break;
+                
+                default:
+                    break;
+            }
+
             Model.Set("btn_back_active", true);
             Model.Set("overlay_play_visible",true); 
             EventManager.Invoke("reset_game");
-            return "";
+            return null;
         }
 
         
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
             switch (name)
             {
                 case "btn_back": 
                     Model.Set("overlay_play_visible",false);
-                    return "menu";
+                    EventManager.Invoke("sound_play","pop");
+                    return new SMenu();
                 
                 case "btn_pause": 
-                    Model.Set("match_time", 0);
-                    return "play";
+                    return new SPlay();
             }
 
-            return "";
+            return null;
         }
         
-        public string Exit()
+        public FSM.IState Exit()
         {
             Model.Set("btn_back_active", false);
-            return "";
+            return null;
         }
     }
 
@@ -48,44 +70,33 @@ namespace States
     /// </summary>
     public class SPlay:FSM.IState
     {
-        private EZ ez;
-        public string Enter()
+        public FSM.IState Enter()
         {
             Model.Set("game_playing",true);
-            Model.Set("gameplay_title","TOUCH TABLE TO PAUSE");
-            
-            var match_time = Model.Get("match_time", 0);
-            Model.Set("label_time",$"Current time: {TimeSpan.FromSeconds(match_time)}");
-            ez = EZ.Spawn().Loop().Wait(1).Add(() =>
-            {
-                match_time++;
-                Model.Set("match_time",match_time);
-                Model.Set("label_time",$"Current time: {TimeSpan.FromSeconds(match_time)}");
-            });
-
-            return "";
+            Model.Set("gameplay_hint","TOUCH TABLE TO PAUSE");
+            Model.Set("gameplay_title","");
+            return null;
         }
 
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
             switch (name)
             {
                 case "player_win":
                     Model.Set("winner", arg);
-                    return "result";
+                    return new SResult();
                 
                 case "btn_pause": 
-                    return "pause";
+                    return new SPause();
             }
 
-            return "";
+            return null;
         }
 
-        public string Exit()
+        public FSM.IState Exit()
         {
-            ez.Clear();
             Model.Set("game_playing",false);
-            return "";
+            return null;
         }
     }
     
@@ -94,25 +105,31 @@ namespace States
     /// </summary>
     public class SResult: FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
-            var winner = Model.Get("winner", -1);
-            Model.Set("gameplay_title",$"PLAYER {winner} WIN!\n Touch table to continue");
-            
-            var match_time = TimeSpan.FromSeconds(Model.Get("match_time", 0));
-            Model.Set("label_time",$"Current time: {match_time}");
-            if (match_time > PrefsManager.BestTime)
-                PrefsManager.BestTime = match_time;
 
-            return "";
+            if (Model.Get("enemy_mode", PlayerMode.Player) == PlayerMode.Ranked){
+                var time = TimeSpan.FromSeconds(Model.Get("timer_seconds", 0f));
+                if (time.TotalSeconds>PrefsManager.BestTime){
+                    PrefsManager.BestTime = (float)time.TotalSeconds;
+                    LeaderboardInterface.SubmitScore(time);
+                }
+            }
+            EventManager.Invoke("sound_play","pong");
+            var winner = Model.Get("winner", -1)==1?
+                Model.Get("player_name","YOU"):
+                Model.Get("enemy_name","ENEMY");
+            Model.Set("gameplay_title",$"{winner} WIN!");
+            Model.Set("gameplay_hint",$"TOUCH TABLE TO CONTINUE");
+            return null;
         }
 
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
-            return name == "btn_pause" ? "ready" : "";
+            return name == "btn_pause" ? new SReady():null;
         }
 
-        public string Exit() => "";
+        public FSM.IState Exit() => null;
     }
     
     /// <summary>
@@ -120,17 +137,18 @@ namespace States
     /// </summary>
     public class SPause:FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
-            Model.Set("gameplay_title","PAUSE");
-            return "";
+            Model.Set("gameplay_title","PAUSED");
+            Model.Set("gameplay_hint",$"TOUCH TABLE TO CONTINUE");
+            return null;
         }
    
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
-            return name == "btn_pause" ? "play" : "";
+            return name == "btn_pause" ? new SPlay():null;
         }
 
-        public string Exit() => "";
+        public FSM.IState Exit() => null;
     }
 }

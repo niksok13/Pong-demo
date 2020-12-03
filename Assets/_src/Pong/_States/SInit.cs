@@ -6,14 +6,17 @@ namespace States
 {
     public class SInit : FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
-            Model.Set("ball_color", PrefsManager.BallColor); 
-            return "menu";
+            Model.Set("difficulty",PrefsManager.Difficulty);
+            Model.Set("sound_volume",PrefsManager.Volume);
+            Model.Set("player_name",PrefsManager.PlayerName);
+            LeaderboardInterface.FetchLeaderboard();
+            return new SMenu();
         }
 
-        public string Exit() => string.Empty;
+        public FSM.IState Exit() => null;
 
-        public string Signal(string name, object arg) => string.Empty;
+        public FSM.IState Signal(string name, object arg) => null;
     }
 }

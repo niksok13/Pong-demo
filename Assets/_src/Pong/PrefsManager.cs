@@ -5,36 +5,53 @@ namespace NSTools
 {
     public static class PrefsManager
     {
-        public static Color BallColor
+        public static float Difficulty
         {
-            get
-            {
-                var str = PlayerPrefs.GetString("ball_color");
-                
-                var color = string.IsNullOrEmpty(str)?
-                    Color.cyan:
-                    JsonUtility.FromJson<Color>(str);
-                
-                return color;
-            }
+            get => PlayerPrefs.GetFloat("difficulty",0.2f);
             set
             {
-                var str = JsonUtility.ToJson(value);
-                PlayerPrefs.SetString("ball_color",str);
+                PlayerPrefs.SetFloat("difficulty", value);
                 PlayerPrefs.Save();
             }
         }
-
-        public static TimeSpan BestTime
+        public static float Volume
+        {
+            get => PlayerPrefs.GetFloat("sound_volume",1f);
+            set
+            {
+                PlayerPrefs.SetFloat("sound_volume", value);
+                PlayerPrefs.Save();
+            }
+        }
+        public static string PlayerName
+        {
+            get => PlayerPrefs.GetString("player_name","ABC");
+            set
+            {
+                PlayerPrefs.SetString("player_name", value);
+                PlayerPrefs.Save();
+            }
+        }
+        public static string UUID
         {
             get
             {
-                var str = PlayerPrefs.GetString("best_time","0");
-                return new TimeSpan(long.Parse(str));
+                string result = PlayerPrefs.GetString("uuid","");
+                if(string.IsNullOrEmpty(result)){
+                    result = Guid.NewGuid().ToString();
+                    Log.Debug(result);
+                    PlayerPrefs.SetString("uuid", result);
+                    PlayerPrefs.Save();
+                }
+                return result;
             }
+        }
+        public static float BestTime
+        {
+            get => PlayerPrefs.GetFloat("best_time", 0f);
             set
             {
-                PlayerPrefs.SetString("best_time", value.Ticks.ToString());
+                PlayerPrefs.SetFloat("best_time", value);
                 PlayerPrefs.Save();
             }
         }

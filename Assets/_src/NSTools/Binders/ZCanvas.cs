@@ -45,8 +45,9 @@ public class ZCanvas : MonoBehaviour
         {
             ez = EZ.Spawn(global).Add(t =>
             {
-             //   cg.alpha = t;
-                _fader.color = new Color(0, 0, 0, t * 0.7f);
+                var c = _fader.color;
+                c.a = t * 0.7f;
+                _fader.color = c;
                 window.localPosition = Vector3.Lerp(pos_from, Vector3.zero, EZ.CubicOut(t));
             });
         }
@@ -54,8 +55,9 @@ public class ZCanvas : MonoBehaviour
         {
             ez = EZ.Spawn(global).Add(t =>
             {
-             //   cg.alpha = 1-t;
-                _fader.color = new Color(0,0,0,(1-t)*0.7f);
+                var c = _fader.color;
+                c.a = (1-t)*0.7f;
+                _fader.color = c;
                 window.localPosition = Vector3.Lerp(pos_from, offscreen, EZ.CubicIn(t));
             }).Add(() =>
             {

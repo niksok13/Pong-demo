@@ -4,42 +4,47 @@ namespace States
 {
     public class SMenu : FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
+            Model.Set("leaderboard_visible", false);
             Model.Set("window_menu_visible", true);
-            return "";
+            return null;
         }
 
         
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
+            
+            EventManager.Invoke("sound_play","pop");
             switch (name)
             {
                 case "btn_play_pvp":
                     Model.Set("enemy_mode", PlayerMode.Player);
-                    return "ready";
+                    return new SReady();
+                
+                case "btn_play_ranked":
+                    Model.Set("leaderboard_visible", true);
+                    Model.Set("enemy_mode", PlayerMode.Ranked);
+                    return new SReady();
                 
                 case "btn_play_pve":                     
                     Model.Set("enemy_mode", PlayerMode.Bot);
-                    return "ready";
+                    return new SReady();
                 
                 case "btn_play_mirror":                     
                     Model.Set("enemy_mode", PlayerMode.Mirror);
-                    return "ready";
+                    return new SReady();
                 
-                case "btn_play_online":                     
-                    Model.Set("enemy_mode", PlayerMode.Online);
-                    return "online_join";
-                
-                case "btn_settings": return "settings";
+                case "btn_settings": 
+                    return new SSettings();
             }
-            return "";
+            return null;
         }
 
-        public string Exit()
+        public FSM.IState Exit()
         {
             Model.Set("window_menu_visible", false);
-            return "";
+            return null;
         }
     }
 }

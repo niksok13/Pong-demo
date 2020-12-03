@@ -6,7 +6,8 @@ using UnityEngine.EventSystems;
 
 public class BaseRacketController : MonoBehaviour
 {
-    public Transform panel, ball;
+    public Transform panel;
+    public BallController ball;
 
     void Awake()
     {
@@ -21,10 +22,10 @@ public class BaseRacketController : MonoBehaviour
     protected void ProcessDrag(PointerEventData eventData)
     {
         if (!Model.Get("game_playing",false)) return;
-        float panel_pos = panel.localPosition.x + eventData.delta.x / 100;
-        panel_pos = Mathf.Min(panel_pos, 2);
-        panel_pos = Mathf.Max(panel_pos, -2);
-        panel.localPosition = new Vector2(panel_pos,0);
+        var panelPos = panel.localPosition.x + eventData.delta.x / 100;
+        panelPos = Mathf.Min(panelPos, 1.9f);
+        panelPos = Mathf.Max(panelPos, -1.9f);
+        panel.localPosition = new Vector2(panelPos,0);
 
     }
     

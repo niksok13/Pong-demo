@@ -19,40 +19,42 @@ public class BallController : MonoBehaviour
     private float wallDistance;
     private float panelDistance;
 
-    private float _wallDistance = 2.5f;
-    private float _panelDistance = 1.92f;
+    private float _wallDistance = 2.4f;
+    private float _panelDistance = 2.4f;
     private const float playerWidth = 1f;
-
-    private SpriteRenderer img;
-    
+    private ParticleSystem ps;
     void Start()
     {
-        img = GetComponent<SpriteRenderer>();
+        ps = GetComponent<ParticleSystem>();
         Model.Bind("game_playing", ProcessGameplayState);
         EventManager.Bind("reset_game",ResetGame);
-        Model.Bind("ball_color",SetColor);
-    }
-    protected void SetColor(object obj)
-    {
-        img.color = Model.Get("ball_color", Color.cyan);
     }
 
     private void ProcessGameplayState(object obj)
     {
         isRunning = Model.Get("game_playing", false);
+        if (isRunning)
+            ps.Play();
+        else
+            ps.Stop();
     }
 
     void ResetGame(object obj)
     {
-        ball_radius = Random.Range(0.1f, 0.2f);
+        var diff = Model.Get("difficulty", 1f);
+        
+        if (Model.Get("enemy_mode", PlayerMode.Player) == PlayerMode.Ranked)
+            diff = 0.5f;
+        
+        ball_radius = 0.3f - diff / 4;
         wallDistance = _wallDistance - ball_radius;
         panelDistance = _panelDistance - ball_radius;
         transform.localScale = Vector2.one*ball_radius*2;
         direction = Random.insideUnitCircle.normalized;
-        while (direction.y<0.3)
+        while (direction.y < 0.83)
             direction = Random.insideUnitCircle.normalized;
 
-        speed = Random.Range(1f, 3f);
+        speed = 5+10f * diff;
         transform.localPosition = Vector3.zero;
     }
 
@@ -66,8 +68,6 @@ public class BallController : MonoBehaviour
             CheckPlayerCollision();
         }
     }
-
-  
 
 
     /// <summary>
@@ -86,8 +86,10 @@ public class BallController : MonoBehaviour
 
         if (pos_fix != 0f)
         {
+            
             direction = Vector3.Reflect(direction, Vector2.right);
             transform.Translate(pos_fix,0,0);
+            ps.Emit(5);
         }
     }
   
@@ -101,8 +103,9 @@ public class BallController : MonoBehaviour
         var pos_fix = 0f;
         
         if (cur_y > panelDistance)
-            if (Mathf.Abs(transform.position.x - player2.position.x) < playerWidth / 2)
+            if (Mathf.Abs(transform.position.x - player2.position.x) < playerWidth / 2+ball_radius)
             {
+                EventManager.Invoke("sound_play","ping");
                 var dx = transform.position.x - player2.position.x;
                 direction = new Vector2(dx*3,-playerWidth).normalized;
                 pos_fix = -(cur_y - panelDistance) * 2;
@@ -112,18 +115,22 @@ public class BallController : MonoBehaviour
             
 
         if (cur_y < -panelDistance)
-            if (Mathf.Abs(transform.position.x - player1.position.x) < playerWidth / 2)
+            if (Mathf.Abs(transform.position.x - player1.position.x) < playerWidth / 2+ball_radius)
             {
+                EventManager.Invoke("sound_play","ping");
                 var dx = transform.position.x - player1.position.x;
                 direction = new Vector2(dx*3,playerWidth).normalized;
                 pos_fix = -(cur_y + panelDistance) * 2;
             }
             else
                 FSM.Signal("player_win", 2);
-            
+
 
         if (pos_fix != 0f)
+        {
             transform.Translate(0,pos_fix,0);
+            ps.Emit(5);
+        }
     }
     
 }

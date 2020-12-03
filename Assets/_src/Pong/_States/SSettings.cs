@@ -5,38 +5,35 @@ namespace States
 {
     public class SSettings: FSM.IState
     {
-        public string Enter()
+        public FSM.IState Enter()
         {
             Model.Set("window_settings_visible", true);
-            return "";
+            return null;
         }
         
-        public string Signal(string name, object arg)
+        public FSM.IState Signal(string name, object arg)
         {
             switch (name)
             {
-                case "btn_back": return "menu";
-                case "set_ball_color": return SetBallColor((Color)arg);
+                case "btn_back": 
+                    EventManager.Invoke("sound_play","pop");
+                    return new SMenu();
             }
             
-            return "";
-        }
-
-        private string SetBallColor(Color col)
-        {
-            Model.Set("ball_color",col);
-            return "";
+            return null;
         }
 
 
-        public string Exit()
+
+        public FSM.IState Exit()
         {
             //Apply settings
-            PrefsManager.BallColor = Model.Get("ball_color", Color.white);
-
+            PrefsManager.Difficulty = Model.Get("difficulty", 0.2f);
+            PrefsManager.Volume = Model.Get("sound_volume", 1f);
+            PrefsManager.PlayerName = Model.Get("player_name", "ABC");
             //Close window
             Model.Set("window_settings_visible", false);
-            return "";
+            return null;
         }
     }
 }
